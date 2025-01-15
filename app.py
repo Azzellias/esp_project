@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 import os
 
@@ -17,7 +17,7 @@ class SensorData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     temperature = db.Column(db.Float)
     humidity = db.Column(db.Float)
-    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    timestamp = db.Column(db.String(100))
 
 # Créer la table si elle n'existe pas encore
 with app.app_context():
@@ -26,7 +26,6 @@ with app.app_context():
 # Route pour afficher les données en temps réel
 @app.route('/')
 def index():
-    # Récupérer les dernières valeurs de température et humidité
     try:
         data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
     except Exception as e:
@@ -37,7 +36,6 @@ def index():
 # Route pour fournir les données au format JSON pour l'API
 @app.route('/data')
 def get_data():
-    # Récupérer les dernières valeurs de température et humidité
     try:
         data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
     except Exception as e:
@@ -46,9 +44,34 @@ def get_data():
     return jsonify({
         'temperature': data.temperature if data else None,
         'humidity': data.humidity if data else None,
-        'timestamp': data.timestamp.isoformat() if data else None
+        'timestamp': data.timestamp if data else None
     })
+
+# Nouvelle route pour recevoir les données envoyées depuis le serveur local
+@app.route('/updateData', methods=['POST'])
+def update_data():
+    try:
+        data = request.get_json()  # Recevoir les données JSON envoyées
+        if not data:
+            return jsonify({"error": "No data received"}), 400
+        
+        # Extraire les valeurs de la requête JSON
+        temperature = data.get("temperature")
+        humidity = data.get("humidity")
+        timestamp = data.get("timestamp")
+        
+        if temperature is None or humidity is None or timestamp is None:
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        # Enregistrer dans la base de données
+        new_data = SensorData(temperature=temperature, humidity=humidity, timestamp=timestamp)
+        db.session.add(new_data)
+        db.session.commit()
+        
+        return jsonify({"message": "Data successfully received and stored"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Lancer le serveur Flask
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
