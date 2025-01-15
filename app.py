@@ -19,21 +19,33 @@ class SensorData(db.Model):
     humidity = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
+# Créer la table si elle n'existe pas encore
+with app.app_context():
+    db.create_all()
+
 # Route pour afficher les données en temps réel
 @app.route('/')
 def index():
     # Récupérer les dernières valeurs de température et humidité
-    data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
+    try:
+        data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
+    except Exception as e:
+        data = None
+        print(f"Erreur lors de la récupération des données: {e}")
     return render_template('index.html', data=data)
 
 # Route pour fournir les données au format JSON pour l'API
 @app.route('/data')
 def get_data():
     # Récupérer les dernières valeurs de température et humidité
-    data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
+    try:
+        data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
+    except Exception as e:
+        data = None
+        print(f"Erreur lors de la récupération des données: {e}")
     return jsonify({
-        'temperature': data.temperature,
-        'humidity': data.humidity,
+        'temperature': data.temperature if data else None,
+        'humidity': data.humidity if data else None,
         'timestamp': data.timestamp.isoformat() if data else None
     })
 
