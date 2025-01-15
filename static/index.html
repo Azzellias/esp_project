@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Température et Humidité</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+        }
+        h1 {
+            margin: 20px 0;
+        }
+        .data {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+        .timestamp {
+            font-size: 1.2em;
+            color: gray;
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("temperature").innerText = "Température: " + data.temperature + " °C";
+                    document.getElementById("humidity").innerText = "Humidité: " + data.humidity + " %";
+                    document.getElementById("timestamp").innerText = "Dernière mise à jour: " + data.timestamp;
+                })
+                .catch(error => console.error("Erreur :", error));
+        }
+
+        setInterval(fetchData, 5000); // Rafraîchir toutes les 5 secondes
+        window.onload = fetchData;
+    </script>
+</head>
+<body>
+    <h1>Suivi en Temps Réel</h1>
+    <div class="data">
+        <p id="temperature">Chargement...</p>
+        <p id="humidity">Chargement...</p>
+        <p id="timestamp" class="timestamp">Chargement...</p>
+    </div>
+</body>
+</html>
