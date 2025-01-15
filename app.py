@@ -7,9 +7,10 @@ app = Flask(__name__)
 
 # Configuration de la base de données PostgreSQL
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL', 
-    'postgresql://esp_data_yshz_user:LUcBbnKHk4OKyBXgfz2YKgvTST1lZOoa@dpg-cu3tdl23esus73fhc0n0-a/esp_data_yshz?sslmode=require'
+    'DATABASE_URL',
+    'postgresql://esp_data_yshz_user:LUcBbnKHk4OKyBXgfz2YKgvTST1lZOoa@dpg-cu3tdl23esus73fhc0n0-a/esp_data_yshz?sslmode=verify-full'
 )
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 
 # Initialisation de SQLAlchemy
