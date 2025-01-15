@@ -60,9 +60,13 @@ def update_data():
         humidity = data.get("humidity")
         timestamp = data.get("timestamp")
         
-        if temperature is None or humidity is None or timestamp is None:
+        if not all([temperature, humidity, timestamp]):
             return jsonify({"error": "Missing required fields"}), 400
         
+        # Valider que temperature et humidity sont des nombres
+        if not isinstance(temperature, (int, float)) or not isinstance(humidity, (int, float)):
+            return jsonify({"error": "Temperature and humidity must be numbers"}), 400
+
         # Enregistrer dans la base de données
         new_data = SensorData(temperature=temperature, humidity=humidity, timestamp=timestamp)
         db.session.add(new_data)
