@@ -1,51 +1,34 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Température et Humidité</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 0;
-            margin: 0;
-        }
-        h1 {
-            margin: 20px 0;
-        }
-        .data {
-            font-size: 1.5em;
-            margin-top: 20px;
-        }
-        .timestamp {
-            font-size: 1.2em;
-            color: gray;
-            margin-top: 10px;
-        }
-    </style>
+    <title>Suivi en Temps Réel</title>
     <script>
-        function fetchData() {
-            fetch('/data')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("temperature").innerText = "Température: " + data.temperature + " °C";
-                    document.getElementById("humidity").innerText = "Humidité: " + data.humidity + " %";
-                    document.getElementById("timestamp").innerText = "Dernière mise à jour: " + data.timestamp;
-                })
-                .catch(error => console.error("Erreur :", error));
+        async function fetchData() {
+            try {
+                const response = await fetch('http://localhost:5000/getData'); // URL de l'API Flask
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('temperature').textContent = `${data.temperature} °C`;
+                    document.getElementById('humidity').textContent = `${data.humidity} %`;
+                    document.getElementById('timestamp').textContent = data.timestamp;
+                } else {
+                    console.error("Erreur lors de la récupération des données :", response.statusText);
+                }
+            } catch (error) {
+                console.error("Erreur réseau :", error);
+            }
         }
 
-        setInterval(fetchData, 5000); // Rafraîchir toutes les 5 secondes
+        setInterval(fetchData, 5000); // Met à jour toutes les 5 secondes
         window.onload = fetchData;
     </script>
 </head>
 <body>
     <h1>Suivi en Temps Réel</h1>
-    <div class="data">
-        <p id="temperature">Chargement...</p>
-        <p id="humidity">Chargement...</p>
-        <p id="timestamp" class="timestamp">Chargement...</p>
-    </div>
+    <p>Température: <span id="temperature">Chargement...</span></p>
+    <p>Humidité: <span id="humidity">Chargement...</span></p>
+    <p>Dernière mise à jour: <span id="timestamp">Chargement...</span></p>
 </body>
 </html>
