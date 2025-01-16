@@ -67,6 +67,8 @@ def update_data():
     try:
         # Lire les données JSON envoyées
         data = request.get_json()
+        print(f"Requête reçue : {data}")  # Log pour vérifier les données reçues
+        
         if not data:
             return jsonify({"error": "No data received"}), 400
 
@@ -88,8 +90,10 @@ def update_data():
         db.session.add(new_data)
         db.session.commit()
 
+        print(f"Données enregistrées : {new_data}")  # Log pour vérifier l'insertion réussie
         return jsonify({"message": "Data successfully received and stored"}), 200
     except Exception as e:
+        print(f"Erreur lors de l'enregistrement : {e}")  # Log d'erreur
         return jsonify({"error": str(e)}), 500
 
 # Lancer le serveur Flask
