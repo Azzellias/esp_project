@@ -4,25 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suivi en Temps Réel</title>
+
+    <!-- Inclure Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.0/firebase-database.js"></script> <!-- Si vous utilisez Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.0/firebase-firestore.js"></script> <!-- Si vous utilisez Firestore -->
+
     <script>
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialiser Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Choisir la base de données à utiliser (Realtime Database ou Firestore)
+        const db = firebase.database(); // Pour Realtime Database
+        // const db = firebase.firestore(); // Pour Firestore
+
         async function fetchData() {
             try {
-                const response = await fetch('http://localhost:5000/getData'); // URL de l'API Flask
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById('temperature').textContent = `${data.temperature} °C`;
-                    document.getElementById('humidity').textContent = `${data.humidity} %`;
-                    document.getElementById('timestamp').textContent = data.timestamp;
+                const snapshot = await db.ref('sensor_data').limitToLast(1).once('value'); // Récupère la dernière donnée
+                const data = snapshot.val();
+                if (data) {
+                    const latestData = Object.values(data)[0]; // Récupérer la première entrée
+                    document.getElementById('temperature').textContent = `${latestData.temperature} °C`;
+                    document.getElementById('humidity').textContent = `${latestData.humidity} %`;
+                    document.getElementById('timestamp').textContent = new Date(latestData.timestamp).toLocaleString();
                 } else {
-                    console.error("Erreur lors de la récupération des données :", response.statusText);
+                    console.error("Aucune donnée trouvée");
                 }
             } catch (error) {
-                console.error("Erreur réseau :", error);
+                console.error("Erreur lors de la récupération des données :", error);
             }
         }
 
         setInterval(fetchData, 5000); // Met à jour toutes les 5 secondes
-        window.onload = fetchData;
+        window.onload = fetchData; // Charge les données au démarrage
     </script>
 </head>
 <body>
