@@ -95,4 +95,4 @@ def update_data():
 # Lancer le serveur Flask
 if __name__ == '__main__':
     # Désactiver debug=True pour production
-    app.run(debug=Fa
+    app.run(debug=False, host='0.0.0.0', port=5000)
