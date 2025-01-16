@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 import logging
 
-# Configuration des logs SQLAlchemy pour débogage
+# Configuration des logs SQLAlchemy pour débogage (désactiver pour production)
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
@@ -13,7 +13,7 @@ app = Flask(__name__)
 # Configuration de la base de données PostgreSQL
 db_url = os.getenv(
     'DATABASE_URL', 
-    'postgresql://esp_data_yshz_user:LUcBbnKHk4OKyBXgfz2YKgvTST1lZOoa@dpg-cu3tdl23esus73fhc0n0-a/esp_data_yshz?sslmode=disable'
+    'postgresql://esp_data_yshz_user:LUcBbnKHk4OKyBXgfz2YKgvTST1lZOoa@dpg-cu3tdl23esus73fhc0n0-a.oregon-postgres.render.com/esp_data_yshz?sslmode=require'
 )
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
@@ -37,30 +37,35 @@ with app.app_context():
 @app.route('/')
 def index():
     try:
+        # Récupérer les dernières données
         data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
+        if not data:
+            data = SensorData(temperature=None, humidity=None, timestamp="No data available")
     except Exception as e:
-        data = None
-        print(f"Erreur lors de la récupération des données: {e}")
+        data = SensorData(temperature=None, humidity=None, timestamp=f"Error: {e}")
     return render_template('index.html', data=data)
 
 # Route pour fournir les données au format JSON pour l'API
 @app.route('/data')
 def get_data():
     try:
+        # Récupérer les dernières données
         data = SensorData.query.order_by(SensorData.timestamp.desc()).first()
+        if not data:
+            return jsonify({'message': 'No data available'}), 404
+        return jsonify({
+            'temperature': data.temperature,
+            'humidity': data.humidity,
+            'timestamp': data.timestamp
+        }), 200
     except Exception as e:
-        data = None
-        print(f"Erreur lors de la récupération des données: {e}")
-    return jsonify({
-        'temperature': data.temperature if data else None,
-        'humidity': data.humidity if data else None,
-        'timestamp': data.timestamp if data else None
-    })
+        return jsonify({'error': str(e)}), 500
 
-# Nouvelle route pour recevoir les données envoyées depuis le serveur local
+# Route pour recevoir les données envoyées depuis le serveur local
 @app.route('/updateData', methods=['POST'])
 def update_data():
     try:
+        # Lire les données JSON envoyées
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data received"}), 400
@@ -70,15 +75,16 @@ def update_data():
         humidity = data.get("humidity")
         timestamp = data.get("timestamp")
 
+        # Valider les champs requis
         if not all([temperature, humidity, timestamp]):
             return jsonify({"error": "Missing required fields"}), 400
 
-        # Valider que temperature et humidity sont des nombres
+        # Valider les types des données
         if not isinstance(temperature, (int, float)) or not isinstance(humidity, (int, float)):
             return jsonify({"error": "Temperature and humidity must be numbers"}), 400
 
         # Enregistrer dans la base de données
-        new_data = SensorData(temperature=10, humidity=20, timestamp=timestamp)
+        new_data = SensorData(temperature=temperature, humidity=humidity, timestamp=timestamp)
         db.session.add(new_data)
         db.session.commit()
 
@@ -88,4 +94,5 @@ def update_data():
 
 # Lancer le serveur Flask
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Désactiver debug=True pour production
+    app.run(debug=Fa
