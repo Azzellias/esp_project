@@ -1,16 +1,23 @@
 from flask import Flask, render_template, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 import os
+import logging
+
+# Configuration des logs SQLAlchemy pour débogage
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
 
 # Configuration de la base de données PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL',
+db_url = os.getenv(
+    'DATABASE_URL', 
     'postgresql://esp_data_yshz_user:LUcBbnKHk4OKyBXgfz2YKgvTST1lZOoa@dpg-cu3tdl23esus73fhc0n0-a/esp_data_yshz?sslmode=disable'
 )
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialisation de SQLAlchemy
 db = SQLAlchemy(app)
@@ -54,18 +61,18 @@ def get_data():
 @app.route('/updateData', methods=['POST'])
 def update_data():
     try:
-        data = request.get_json()  # Recevoir les données JSON envoyées
+        data = request.get_json()
         if not data:
             return jsonify({"error": "No data received"}), 400
-        
+
         # Extraire les valeurs de la requête JSON
         temperature = data.get("temperature")
         humidity = data.get("humidity")
         timestamp = data.get("timestamp")
-        
+
         if not all([temperature, humidity, timestamp]):
             return jsonify({"error": "Missing required fields"}), 400
-        
+
         # Valider que temperature et humidity sont des nombres
         if not isinstance(temperature, (int, float)) or not isinstance(humidity, (int, float)):
             return jsonify({"error": "Temperature and humidity must be numbers"}), 400
@@ -74,7 +81,7 @@ def update_data():
         new_data = SensorData(temperature=temperature, humidity=humidity, timestamp=timestamp)
         db.session.add(new_data)
         db.session.commit()
-        
+
         return jsonify({"message": "Data successfully received and stored"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
