@@ -78,7 +78,7 @@ def update_data():
             return jsonify({"error": "Temperature and humidity must be numbers"}), 400
 
         # Enregistrer dans la base de données
-        new_data = SensorData(temperature=temperature, humidity=humidity, timestamp=timestamp)
+        new_data = SensorData(temperature=10, humidity=20, timestamp=timestamp)
         db.session.add(new_data)
         db.session.commit()
 
